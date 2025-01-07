@@ -251,6 +251,12 @@ function juliaCmd() {
   return Deno.env.get("QUARTO_JULIA") ?? "julia";
 }
 
+function powershell_argument_list_to_string(...args: string[]): string {
+  // formats as '"arg 1" "arg 2" "arg 3"'
+  const inner = args.map((arg) => `"${arg}"`).join(" ");
+  return `'${inner}'`;
+}
+
 async function startOrReuseJuliaServer(
   options: JuliaExecuteOptions,
 ): Promise<{ reused: boolean }> {
@@ -312,17 +318,13 @@ async function startOrReuseJuliaServer(
             "-Command",
             "Start-Process",
             juliaCmd(),
-            "-ArgumentList",
-            // string array argument list, each element but the last must have a "," element after
-            "--startup-file=no",
-            ",",
-            `--project=${juliaProject}`,
-            ",",
-            resourcePath("julia/quartonotebookrunner.jl"),
-            ",",
-            transportFile,
-            ",",
-            juliaServerLogFile(),
+            powershell_argument_list_to_string(
+              "--startup-file=no",
+              `--project=${juliaProject}`,
+              resourcePath("julia/quartonotebookrunner.jl"),
+              transportFile,
+              juliaServerLogFile(),
+            ),
             // end of string array
             "-WindowStyle",
             "Hidden",
